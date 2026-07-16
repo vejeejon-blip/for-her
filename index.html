@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For Kyra</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=Cormorant+Garamond:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-color: #0A0812;
+            --text-primary: #F0E6FF;
+            --text-secondary: #A78BC8;
+            --accent: #8B5FBF;
+            --accent-soft: rgba(139, 95, 191, 0.35);
+            --card-white: #ffffff;
+            --card-text: #1c1917;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background:
+                radial-gradient(ellipse 100% 50% at 50% -5%, rgba(100,55,155,0.22) 0%, transparent 65%),
+                radial-gradient(ellipse 50% 40% at 90% 30%, rgba(74,30,120,0.15) 0%, transparent 60%);
+        }
+
+        /* 1. Start Screen */
+        #start-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            transition: opacity 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .start-title {
+            font-family: Georgia, serif;
+            font-style: italic;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-bottom: 28px;
+            opacity: 0.85;
+            letter-spacing: 0.5px;
+        }
+
+        .start-btn {
+            background-color: transparent;
+            color: var(--text-primary);
+            border: 1px solid rgba(167, 139, 200, 0.35);
+            padding: 18px 50px;
+            font-size: 0.95rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+        }
+        .start-btn:hover {
+            background-color: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+            box-shadow: 0 10px 30px var(--accent-soft);
+        }
+        .start-btn:active { transform: scale(0.97); }
+
+        .loading-note {
+            position: absolute;
+            bottom: 32px;
+            font-size: 0.72rem;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            opacity: 0;
+            transition: opacity 0.6s ease;
+            text-transform: uppercase;
+        }
+        .loading-note.visible { opacity: 0.6; }
+
+        /* 2. Intro Overlay */
+        #intro-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 90;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1.5s ease-in-out;
+        }
+        #intro-text {
+            font-family: Georgia, serif;
+            font-style: italic;
+            font-size: 3.2rem;
+            font-weight: 300;
+            letter-spacing: 2px;
+            color: var(--text-primary);
+            opacity: 0;
+            transition: opacity 1.8s ease-in-out;
+        }
+
+        #controls {
+            position: fixed;
+            top: 20px; right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 80;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease;
+        }
+        #controls.visible { opacity: 1; pointer-events: auto; }
+
+        .ctrl-btn {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            border: 1px solid rgba(167, 139, 200, 0.3);
+            background: rgba(10, 8, 18, 0.6);
+            backdrop-filter: blur(6px);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .ctrl-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .ctrl-btn svg { width: 16px; height: 16px; fill: currentColor; }
+
+        #audio-nudge {
+            position: fixed;
+            bottom: 24px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 8, 18, 0.9);
+            border: 1px solid var(--accent-soft);
+            color: var(--text-primary);
+            padding: 12px 22px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            z-index: 95;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+        #audio-nudge.visible { opacity: 1; pointer-events: auto; }
+
+        /* 3. Single-column letter */
+        .letter-column {
+            position: relative;
+            z-index: 1;
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 22vh 24px 16vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .letter-p {
+            font-family: Georgia, serif;
+            font-size: 1.2rem;
+            line-height: 1.9;
+            color: #D9CCEE;
+            margin-bottom: 2.5rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 2s cubic-bezier(0.25, 1, 0.5, 1), transform 2s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .letter-p.visible { opacity: 1; transform: translateY(0); }
+
+        .letter-p.heading {
+            font-family: system-ui, sans-serif;
+            font-size: 1.7rem;
+            font-weight: 300;
+            letter-spacing: 1px;
+            color: var(--text-primary);
+            margin-bottom: 4rem;
+            position: relative;
+            padding-bottom: 18px;
+        }
+        .letter-p.heading::after {
+            content: "";
+            position: absolute;
+            left: 0; bottom: 0;
+            width: 46px; height: 2px;
+            background: var(--accent);
+            opacity: 0;
+            transition: opacity 1.5s ease 0.6s, width 1.5s ease 0.6s;
+        }
+        .letter-p.heading.visible::after { opacity: 1; width: 72px; }
+
+        /* Fancier reveal for short, emotionally-weighted standalone lines
+           that each got their own timestamp in the narration script */
+        .letter-p.emphasis {
+            font-style: italic;
+            color: var(--text-primary);
+            text-shadow: 0 0 0 transparent;
+            letter-spacing: 0.04em;
+            filter: blur(4px);
+            transition: opacity 1.6s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 1.6s cubic-bezier(0.16, 1, 0.3, 1),
+                        filter 1.6s cubic-bezier(0.16, 1, 0.3, 1),
+                        text-shadow 1.8s ease 0.3s;
+        }
+        .letter-p.emphasis.visible {
+            filter: blur(0);
+            text-shadow: 0 0 18px var(--accent-soft);
+        }
+
+        .letter-p.sign-off {
+            margin-top: 4rem;
+            color: var(--accent);
+            font-style: italic;
+            letter-spacing: 0.5px;
+        }
+
+        /* The "Happy Birthday..." line builds itself phrase by phrase */
+        .phrase-line {
+            font-family: Georgia, serif;
+            font-size: 1.2rem;
+            line-height: 1.9;
+            color: #D9CCEE;
+            margin-bottom: 2.5rem;
+        }
+        .phrase {
+            display: inline;
+            opacity: 0;
+            filter: blur(3px);
+            transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), filter 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .phrase.visible { opacity: 1; filter: blur(0); }
+        .phrase.gold {
+            color: var(--text-primary);
+            font-style: italic;
+        }
+
+        /* 4. Inline photo moments */
+        .photo-moment {
+            width: 100%;
+            max-width: 340px;
+            margin: 0 auto 3rem;
+            opacity: 0;
+            transform: translateY(24px) scale(0.97);
+            transition: opacity 1.4s cubic-bezier(0.25, 1, 0.5, 1), transform 1.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .photo-moment.visible { opacity: 1; transform: translateY(0) scale(1); }
+
+        .photo-frame {
+            background: var(--card-white);
+            border-radius: 14px;
+            padding: 10px 10px 16px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.55), 0 0 60px var(--accent-soft);
+        }
+
+        .photo-frame img {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+            border-radius: 8px;
+            display: block;
+        }
+
+        .photo-caption {
+            font-family: Georgia, serif;
+            font-style: italic;
+            font-size: 0.85rem;
+            color: #57534e;
+            margin-top: 10px;
+            padding: 0 4px;
+        }
+
+        /* 5. Postscript note */
+        .postscript {
+            width: 100%;
+            max-width: 360px;
+            margin: 1rem auto 2.5rem;
+            background: #FBF7F0;
+            color: #2b2530;
+            border-radius: 4px;
+            padding: 2rem 1.8rem;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.55), 0 0 50px var(--accent-soft);
+            transform: rotate(-1.5deg) translateY(24px);
+            opacity: 0;
+            transition: opacity 1.6s cubic-bezier(0.16, 1, 0.3, 1), transform 1.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .postscript.visible {
+            opacity: 1;
+            transform: rotate(-1.5deg) translateY(0);
+        }
+        .postscript-line {
+            font-family: 'Caveat', cursive;
+            font-size: 1.5rem;
+            line-height: 1.5;
+            color: #4a3f52;
+        }
+        .postscript-love {
+            font-family: 'Caveat', cursive;
+            font-size: 2.6rem;
+            color: var(--accent);
+            margin-top: 6px;
+            display: inline-block;
+            animation: lovePulse 2.6s ease-in-out infinite;
+        }
+        @keyframes lovePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.06); }
+        }
+
+        /* 6. Finale gallery + video */
+        .finale {
+            width: 100%;
+            max-width: 420px;
+            margin: 0 auto;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1.6s ease, transform 1.6s ease;
+        }
+        .finale.visible { opacity: 1; transform: translateY(0); }
+
+        .finale-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            background: var(--card-white);
+            padding: 8px;
+            border-radius: 14px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.55), 0 0 60px var(--accent-soft);
+        }
+
+        .finale-grid img {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+            border-radius: 6px;
+            opacity: 0;
+            transform: scale(1.08);
+            transition: opacity 1.1s ease, transform 1.1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .finale-grid img.gallery-in { opacity: 1; transform: scale(1); }
+
+        .watch-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 18px;
+            background: var(--card-white);
+            color: var(--card-text);
+            border: none;
+            padding: 12px 22px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            letter-spacing: 0.4px;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(6px);
+            pointer-events: none;
+            transition: opacity 0.8s ease, transform 0.8s ease, background 0.3s ease, color 0.3s ease;
+        }
+        .watch-btn.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        .watch-btn:hover { background: var(--accent); color: #fff; }
+        .watch-btn svg { width: 14px; height: 14px; fill: currentColor; }
+
+        #video-lightbox {
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 4, 9, 0.94);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.6s ease;
+        }
+        #video-lightbox.visible { opacity: 1; pointer-events: auto; }
+
+        .lightbox-video {
+            max-width: min(90vw, 480px);
+            max-height: 80vh;
+            border-radius: 14px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), 0 0 60px var(--accent-soft);
+        }
+
+        #lightbox-close {
+            position: absolute;
+            top: 24px; right: 28px;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 2rem;
+            font-weight: 300;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        #lightbox-close:hover { opacity: 1; transform: rotate(90deg); }
+
+        @media (max-width: 640px) {
+            .letter-column { padding: 14vh 20px 12vh; }
+            .letter-p, .phrase-line { font-size: 1.05rem; line-height: 1.8; }
+            .letter-p.heading { font-size: 1.4rem; }
+            #controls { bottom: 20px; top: auto; right: 20px; }
+        }
+
+        @media (max-width: 420px) {
+            .start-btn { padding: 16px 36px; font-size: 0.85rem; letter-spacing: 2px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen">
+        <p class="start-title">a little something for you</p>
+        <button class="start-btn" id="start-btn">Open Letter</button>
+        <p class="loading-note" id="loading-note">loading photos…</p>
+    </div>
+
+    <div id="intro-overlay">
+        <h1 id="intro-text">Heyy</h1>
+    </div>
+
+    <div id="controls">
+        <div class="ctrl-btn" id="mute-btn" title="Mute music">
+            <svg viewBox="0 0 24 24" id="mute-icon"><path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+        </div>
+        <div class="ctrl-btn" id="replay-btn" title="Replay">
+            <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+        </div>
+    </div>
+
+    <div id="audio-nudge">tap here for sound ♡</div>
+
+    <main class="letter-column">
+        <p class="letter-p heading" id="p0">To my Dearest Kyra,</p>
+
+        <p class="letter-p" id="p1">First of all, Happiest Birthday to my dearest Kyra! I’m writing this letter kasi gusto ko replayan yung letter mo hehe. Wag mo sanang tawanan ‘tong letter ko kasi first time ko pa gumawa hehe. Anyways, 19 kana, baby. One more year ‘till in your twenties na.</p>
+
+        <p class="letter-p" id="p2">Kidding aside, I just want to say that you are my greatest risk. Because loving you means risking my heart entirely. It’s just funny that you made me follow the advice that I wrote in our film. To risk or to lose the chance. Alam ko na palagi ko tong kwine-kwento ‘to sayo pero, you made me stare at our graduation ball picture for a long time. It was just a couple minutes, but in that couple minutes, I was already thinking of us. And in that short amount of time, I found myself going back in time, not just to that night, but before that. To our practice.</p>
+
+        <!-- Photo 1: our graduation ball picture -->
+        <div class="photo-moment" id="photo-ball">
+            <div class="photo-frame">
+                <img src="images/gradball.JPG" alt="Our graduation ball">
+            </div>
+            <p class="photo-caption">our graduation ball</p>
+        </div>
+
+        <p class="letter-p" id="p3">When I was afraid to hold your waist because I didn’t want you to feel uncomfortable. You guided my hand towards your waist and that made me feel shy. Yes, I know, cringe nyaknyak. And also, there was this moment – in our practice – when I needed to touch your face in our dance. For the same reason, I didn’t want to touch your face because I’m a gentleman (kidding nahihiya lang talaga ko). But then, you just guided my hand onto your face. I wasn’t even sure what I felt back then, but I do know that something was lit inside me. You even made me some accessories para ‘di lang ikaw yung “oa”. It may be just an accessory but it was something special for me. You made my suit stand out from the rest, and even attracted Ma’am Amor. Yon tuloy, may award ako nyaknyaknyak. And now, we’re in the middle of the dance floor, trembling if we’ll make a mistake. And yet, we danced. I led you, even though I didn’t know the entire dance. And in that short amount of time, that’s when I realized that I like you.</p>
+
+        <p class="letter-p emphasis" id="p3b">And that I’m in love with you.</p>
+
+        <p class="letter-p emphasis" id="p4" style="color: var(--text-primary);">I took my chance and asked you for a picture after our graduation.</p>
+
+        <!-- Photo 2: our actual graduation day picture -->
+        <div class="photo-moment" id="photo-graduation">
+            <div class="photo-frame">
+                <img src="images/gradpic.jpg" alt="The day we graduated">
+            </div>
+            <p class="photo-caption">the day we graduated</p>
+        </div>
+
+        <p class="letter-p" id="p5">It was a memory of us that's been living rent-free in my head. A memory that made me love you regardless of our situation. A memory I kept for six months for myself. Until I finally said it, up on that mountain where it's just the two of us, and that suffocating air whether I should say it or not.</p>
+
+        <!-- Photo 3: Mt. Yangbew -->
+        <div class="photo-moment" id="photo-yangbew">
+            <div class="photo-frame">
+                <img src="images/yangbew.jpg" alt="Mt. Yangbew">
+            </div>
+            <p class="photo-caption">Mt. Yangbew, our spot</p>
+        </div>
+
+        <p class="letter-p" id="p6a">When we were sitting in our spot, you told me “di naman kasi ako naghahanap ng kachat eh”. I didn't take that seriously because you were chuckling when you said that, and also because I knew that it meant something. That’s when I told you the reason why I invited you to go to Mt. Yangbew with me. To tell you what I really feel about you — that I love you, matagal na.</p>
+
+        <p class="letter-p" id="p6b">The words that I couldn't say earlier finally blurted out. I also apologized because it took too long for me to confess my feelings. But you said that it was okay, and that I took my time. That's when I realized that the risk that I took was worth it. You also interviewed me, it was a fun way to break the seriousness of that situation. You also asked what I liked about you, when, how, and why. We goofed around for some time and when that ended, you told me something I wasn’t ready to hear. That you also liked me. I wasn’t expecting a reply to what I said, that's why I was caught off guard. It was just a sentence that came out of your mouth, but it took me a couple minutes to fully comprehend what you just said. It's a reply that even my ancestors would be so happy to receive.</p>
+
+        <p class="letter-p" id="p6c">And in that moment, when your cold hand was wrapped around my hand, and your head was resting on my shoulders. It's as if our body wasn’t done talking. I knew that I needed to keep you, and to make you feel the warmth of my body, until the very end of infinity. Because, you lit that spark that was once blown away from my own mistakes.</p>
+
+        <p class="letter-p" id="p7a">And now, almost six months later, I still find myself noticing little things about you. The way you fidget your thumbs with mine. The way you hold my ears when we're hanging out. You said that it was a habit of your father that made you calm when you were a kid. The way your arms always slither towards my arms when we’re together. You also always play with my hair. I also love how you always agree when I’m asking you to remove my white hairs. It always makes me sleepy when you're doing it. It may be small things but all these things make me feel one thing.</p>
+
+        <p class="letter-p emphasis" id="p7b">The warmth of a home.</p>
+
+        <p class="letter-p emphasis" id="p7c">A home full of laughter, comfort and peace.</p>
+
+        <p class="letter-p" id="p8a">What I’m just trying to say is that I love you. I love how you are so appreciative — even the smallest things. I love that you were always there when someone needed you the most. I love how you are so easy to trust. I love your creativity. I love how you manage to still show empathy and the effort to understand someone, even when they wronged you. You’re so…patient. And lastly, I love everything that you hate about yourself. That's why I love you. I really do.</p>
+
+        <p class="letter-p emphasis" id="p8b">You made me love you with your eyes, and now you made me love you even more with your soul.</p>
+
+        <p class="phrase-line" id="p9">
+            <span class="phrase" id="p9a">Once again, Happy Birthday to you, </span><span class="phrase" id="p9b">my treasurer, </span><span class="phrase" id="p9c">my dance partner, </span><span class="phrase" id="p9d">and my girlfriend, </span><span class="phrase gold" id="p9e">Kyra.</span>
+        </p>
+
+        <p class="letter-p emphasis" id="p10">Thank you for existing, and choosing me too.</p>
+
+        <p class="letter-p sign-off" id="p11">— Totski.</p>
+
+        <!-- Postscript note -->
+        <div class="postscript" id="postscript">
+            <p class="postscript-line">My late gift for you,<br>and happy 6th monthsarry, Ya.</p>
+            <span class="postscript-love">I love you ♡</span>
+        </div>
+
+        <!-- Finale: all photos together + tap to watch video -->
+        <div class="finale" id="finale">
+            <div class="finale-grid" id="finale-grid">
+                <img src="images/gradball.JPG" alt="" class="finale-img">
+                <img src="images/gradpic.jpg" alt="" class="finale-img">
+                <img src="images/yangbew.jpg" alt="" class="finale-img">
+            </div>
+            <button class="watch-btn" id="watch-video-btn" type="button">
+                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                watch the moment
+            </button>
+        </div>
+    </main>
+
+    <div id="video-lightbox">
+        <button id="lightbox-close" title="Close">&times;</button>
+        <video id="vid-wave" class="lightbox-video" src="video/waving.mp4" playsinline controls></video>
+    </div>
+
+    <!-- Rename these two files to exactly "narration.mp3" and "bg-music.mp3"
+         (no spaces) before uploading, or update the src below to match. -->
+    <audio id="narration-audio" src="audio/brah.mp3" preload="auto"></audio>
+    <audio id="bg-music" src="audio/bg-music.mp3" loop preload="auto"></audio>
+
+    <script>
+        const startScreen = document.getElementById('start-screen');
+        const startBtn = document.getElementById('start-btn');
+        const loadingNote = document.getElementById('loading-note');
+        const introOverlay = document.getElementById('intro-overlay');
+        const introText = document.getElementById('intro-text');
+        const narrationAudio = document.getElementById('narration-audio');
+        const bgMusic = document.getElementById('bg-music');
+        const controls = document.getElementById('controls');
+        const muteBtn = document.getElementById('mute-btn');
+        const muteIcon = document.getElementById('mute-icon');
+        const replayBtn = document.getElementById('replay-btn');
+        const audioNudge = document.getElementById('audio-nudge');
+
+        const photoBall = document.getElementById('photo-ball');
+        const photoGraduation = document.getElementById('photo-graduation');
+        const photoYangbew = document.getElementById('photo-yangbew');
+        const postscript = document.getElementById('postscript');
+        const finale = document.getElementById('finale');
+        const finaleImgs = document.querySelectorAll('.finale-img');
+        const watchVideoBtn = document.getElementById('watch-video-btn');
+        const videoLightbox = document.getElementById('video-lightbox');
+        const lightboxClose = document.getElementById('lightbox-close');
+        const vidWave = document.getElementById('vid-wave');
+
+        // Real timestamps from the narration script (converted to seconds)
+        const paragraphTimestamps = {
+            "p0": 0,
+            "p1": 6,
+            "p2": 27.8,
+            "p3": 76.7,
+            "p3b": 168.1,
+            "p4": 171.5,
+            "p5": 177.1,
+            "p6a": 201.9,
+            "p6b": 234.0,
+            "p6c": 308.02,
+            "p7a": 340.0,
+            "p7b": 390.0,
+            "p7c": 392.4,
+            "p8a": 396.5,
+            "p8b": 445.3,
+            "p9a": 451.9,
+            "p9b": 456.0,
+            "p9c": 457.2,
+            "p9d": 458.9,
+            "p9e": 460.2,
+            "p10": 462.1,
+            "p11": 466.3
+        };
+
+        // Photos reveal at the same beat as the paragraph that tells their story
+        const photoTimestamps = [
+            { time: paragraphTimestamps.p2, el: photoBall },
+            { time: paragraphTimestamps.p4, el: photoGraduation },
+            { time: paragraphTimestamps.p5, el: photoYangbew }
+        ];
+
+        let isMuted = false;
+        let endedFired = false;
+
+        let mediaReady = false;
+        const mediaToPreload = Array.from(document.querySelectorAll('.photo-frame img, .finale-img'));
+        let loadedCount = 0;
+        function markLoaded() {
+            loadedCount++;
+            if (loadedCount >= mediaToPreload.length) mediaReady = true;
+        }
+        mediaToPreload.forEach(el => {
+            if (el.complete) markLoaded();
+            else el.addEventListener('load', markLoaded, { once: true });
+            el.addEventListener('error', markLoaded, { once: true });
+        });
+        setTimeout(() => { if (!mediaReady) loadingNote.classList.add('visible'); }, 900);
+
+        function beginExperience() {
+            startScreen.style.opacity = '0';
+            setTimeout(() => startScreen.style.display = 'none', 1200);
+
+            setTimeout(() => {
+                introOverlay.style.opacity = '1';
+                setTimeout(() => introText.style.opacity = '1', 400);
+                setTimeout(() => introText.style.opacity = '0', 2400);
+            }, 400);
+
+            setTimeout(() => {
+                introOverlay.style.opacity = '0';
+                setTimeout(() => introOverlay.style.display = 'none', 1500);
+
+                controls.classList.add('visible');
+
+                bgMusic.volume = 0.05;
+                const bgPromise = bgMusic.play();
+                const narrationPromise = narrationAudio.play();
+
+                Promise.all([bgPromise, narrationPromise]).catch(() => {
+                    audioNudge.classList.add('visible');
+                });
+            }, 4400);
+        }
+
+        audioNudge.addEventListener('click', () => {
+            bgMusic.play().catch(() => {});
+            narrationAudio.play().catch(() => {});
+            audioNudge.classList.remove('visible');
+        });
+
+        startBtn.addEventListener('click', beginExperience);
+
+        muteBtn.addEventListener('click', () => {
+            isMuted = !isMuted;
+            bgMusic.muted = isMuted;
+            narrationAudio.muted = isMuted;
+            muteIcon.innerHTML = isMuted
+                ? '<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>'
+                : '<path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
+        });
+
+        watchVideoBtn.addEventListener('click', () => {
+            videoLightbox.classList.add('visible');
+            bgMusic.volume = 0.03;
+            vidWave.muted = isMuted;
+            vidWave.currentTime = 0;
+            vidWave.play().catch(() => {});
+        });
+
+        function closeLightbox() {
+            videoLightbox.classList.remove('visible');
+            vidWave.pause();
+            bgMusic.volume = 0.05;
+        }
+
+        lightboxClose.addEventListener('click', closeLightbox);
+        videoLightbox.addEventListener('click', (e) => {
+            if (e.target === videoLightbox) closeLightbox();
+        });
+
+        replayBtn.addEventListener('click', () => {
+            narrationAudio.currentTime = 0;
+            narrationAudio.play().catch(() => {});
+            document.querySelectorAll('.letter-p.visible, .photo-moment.visible, .phrase.visible').forEach(el => {
+                el.classList.remove('visible');
+            });
+            postscript.classList.remove('visible');
+            finale.classList.remove('visible');
+            finaleImgs.forEach(img => img.classList.remove('gallery-in'));
+            watchVideoBtn.classList.remove('visible');
+            endedFired = false;
+            closeLightbox();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        narrationAudio.addEventListener('timeupdate', () => {
+            const time = narrationAudio.currentTime;
+
+            for (const [id, targetTime] of Object.entries(paragraphTimestamps)) {
+                if (time >= targetTime) {
+                    const el = document.getElementById(id);
+                    if (el && !el.classList.contains('visible')) {
+                        el.classList.add('visible');
+                        if (!el.classList.contains('phrase')) {
+                            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }
+                }
+            }
+
+            photoTimestamps.forEach(({ time: t, el }) => {
+                if (time >= t && !el.classList.contains('visible')) {
+                    el.classList.add('visible');
+                }
+            });
+        });
+
+        narrationAudio.addEventListener('ended', () => {
+            if (endedFired) return;
+            endedFired = true;
+
+            postscript.classList.add('visible');
+
+            setTimeout(() => {
+                finale.classList.add('visible');
+                finaleImgs.forEach((img, i) => {
+                    setTimeout(() => img.classList.add('gallery-in'), i * 220);
+                });
+                setTimeout(() => watchVideoBtn.classList.add('visible'), 900);
+            }, 1400);
+        });
+    </script>
+</body>
+</html> 
